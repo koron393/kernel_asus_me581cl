@@ -32,6 +32,15 @@
 #define HIVE_ISP_MAX_BURST_LENGTH	1024
 
 /*
+ * Maximum allowed burst length in words for the ISP DMA
+ * This value is set to 2 to prevent the ISP DMA from blocking
+ * the bus for too long; as the input system can only buffer
+ * 2 lines on Moorefield and Cherrytrail, the input system buffers
+ * may overflow if blocked for too long (BZ 2726).
+ */
+#define ISP_DMA_MAX_BURST_LENGTH	2
+
+/*
  * Create a list of HAS and IS properties that defines the system
  *
  * The configuration assumes the following

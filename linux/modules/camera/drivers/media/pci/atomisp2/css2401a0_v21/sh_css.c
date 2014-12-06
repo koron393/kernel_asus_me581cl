@@ -65,6 +65,7 @@
 #endif
 #include "mmu_device.h"		/* mmu_set_page_table_base_index(), ... */
 #include "gdc_device.h"		/* HRT_GDC_N */
+#include "dma.h"		/* dma_set_max_burst_size() */
 #include "irq.h"			/* virq */
 #include "sp.h"				/* cnd_sp_irq_enable() */
 #include "isp.h"			/* cnd_isp_irq_enable, ISP_VEC_NELEMS */
@@ -1802,6 +1803,9 @@ ia_css_init(const struct ia_css_env *env,
 #endif
 
 #if !defined(HAS_NO_INPUT_SYSTEM)
+	dma_set_max_burst_size(DMA0_ID, HIVE_DMA_BUS_DDR_CONN,
+			       ISP_DMA_MAX_BURST_LENGTH);
+
 	if(ia_css_isys_init() != INPUT_SYSTEM_ERR_NO_ERROR)
 		err = IA_CSS_ERR_INVALID_ARGUMENTS;
 #endif

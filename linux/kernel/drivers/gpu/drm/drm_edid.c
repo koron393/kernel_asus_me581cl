@@ -997,8 +997,10 @@ bool drm_edid_block_valid(u8 *raw_edid, int block, bool print_bad_edid)
 		}
 
 		/* allow CEA to slide through, switches mangle this */
-		if (raw_edid[0] != 0x02)
-			goto bad;
+		if (raw_edid[0] != 0x02) {
+			DRM_INFO("Extension tag is not 0x02 for CEA EDID, fix it !!\n");
+			raw_edid[0] = 0x02;
+		}
 	}
 
 	/* per-block-type checks */

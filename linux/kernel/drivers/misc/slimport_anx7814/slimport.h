@@ -38,7 +38,7 @@
 #include <linux/of_platform.h>
 
 #define SSC_EN
- 
+
 
 #define AUX_ERR  1
 #define AUX_OK   0

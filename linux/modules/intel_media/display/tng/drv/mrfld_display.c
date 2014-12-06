@@ -288,6 +288,15 @@ static void mrfld_crtc_dpms(struct drm_crtc *crtc, int mode)
 	}
 #endif
 
+	if (pipe == 1 && hdmi_priv &&
+		((hdmi_priv->hdmi_suspended == true &&
+		(mode == DRM_MODE_DPMS_SUSPEND || mode == DRM_MODE_DPMS_OFF)) ||
+		(hdmi_priv->hdmi_suspended == false &&
+		(mode == DRM_MODE_DPMS_STANDBY || mode == DRM_MODE_DPMS_ON)))) {
+			pr_info("%s: skip.\n");
+			return;
+	}
+
 	power_island = pipe_to_island(pipe);
 
 	if (!power_island_get(power_island))
@@ -328,7 +337,6 @@ static void mrfld_crtc_dpms(struct drm_crtc *crtc, int mode)
 	switch (mode) {
 	case DRM_MODE_DPMS_ON:
 	case DRM_MODE_DPMS_STANDBY:
-	case DRM_MODE_DPMS_SUSPEND:
 		DCLockMutex();
 
 		/* Enable the DPLL */
@@ -448,8 +456,25 @@ static void mrfld_crtc_dpms(struct drm_crtc *crtc, int mode)
 		/* psb_intel_crtc_dpms_video(crtc, true); TODO */
 
 		break;
+	case DRM_MODE_DPMS_SUSPEND:
 	case DRM_MODE_DPMS_OFF:
 		DCLockMutex();
+
+		/* give time to the last flip to take effective,
+		  * if we disable hardware too quickly, overlay hardware may
+		  * crash, causing pipe hang next time when we try to use overlay
+		  */
+		msleep(50);
+		DC_MRFLD_onPowerOff(pipe);
+		msleep(50);
+
+		drm_handle_vblank(dev, pipe);
+
+		/* Turn off vsync interrupt. */
+		drm_vblank_off(dev, pipe);
+
+		/* Make the pending flip request as completed. */
+		DCUnAttachPipe(pipe);
 
 		/* Give the overlay scaler a chance to disable
 		 * if it's on this pipe */
@@ -507,20 +532,12 @@ static void mrfld_crtc_dpms(struct drm_crtc *crtc, int mode)
 			}
 		}
 
-		drm_handle_vblank(dev, pipe);
-
-		/* Turn off vsync interrupt. */
-		drm_vblank_off(dev, pipe);
-
 		if ((pipe == 1) && hdmi_priv)
 			hdmi_priv->hdmi_suspended = true;
 
 		if (IS_ANN(dev))
 			mofd_update_fifo_size(dev, false);
 
-		/* Make the pending flip request as completed. */
-		DCUnAttachPipe(pipe);
-		DC_MRFLD_onPowerOff(pipe);
 		DCUnLockMutex();
 		break;
 	}

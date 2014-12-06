@@ -1,23 +1,11 @@
-/*
- * Copyright(c) 2014, Analogix Semiconductor. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 and
- * only version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- */
-
 #include "slimport.h"
 #include "slimport_tx_drv.h"
 #ifdef CEC_ENABLE
 #include "slimport_tx_cec.h"
 #endif
-//#define CHANGE_TX_P0_ADDR
+
+/*#define CO2_CABLE_DET_MODE*/
+/*//#define CHANGE_TX_P0_ADDR*/
 
 //#define SP_REGISTER_SET_TEST
 
@@ -91,7 +79,8 @@
 	sp_write_reg(TX_P1, SP_TX_LT_CTRL_REG18, 0x72); \
 	sp_write_reg(TX_P1, SP_TX_LT_CTRL_REG9, 0x7F); \
 	sp_write_reg(TX_P1, SP_TX_LT_CTRL_REG19, 0x7e); \
-	}while(0) 
+	} while (0)
+
 #endif
 
 #ifdef CHANGE_TX_P0_ADDR
@@ -100,4 +89,3 @@
 	#define TX_P0 0x78
 #endif
 #endif
-

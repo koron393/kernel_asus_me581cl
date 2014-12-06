@@ -1710,10 +1710,16 @@ static int wifi_suspend(struct platform_device *pdev, pm_message_t state)
 static int wifi_resume(struct platform_device *pdev)
 {
 	DHD_TRACE(("##> %s\n", __FUNCTION__));
+	dhd_pub_t *dhdp = bcmsdh_get_drvdata();
 #if (LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 39)) && defined(OOB_INTR_ONLY) && 1
 	if (dhd_os_check_if_up(bcmsdh_get_drvdata()))
 		bcmsdh_oob_intr_set(1);
 #endif /* (OOB_INTR_ONLY) */
+	if (dhd_os_check_if_up(dhdp)) {
+		if (dhdp->op_mode & DHD_FLAG_HOSTAP_MODE)
+			dhd_ap_wake_lock_timeout(dhdp, 3000);
+	}
+
 	return 0;
 }
 

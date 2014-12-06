@@ -53,12 +53,23 @@ static void show_cpuinfo_misc(struct seq_file *m, struct cpuinfo_x86 *c)
 		   c->cpuid_level);
 }
 #endif
-
+#define INTEL_Z3580_CPU_FREQ 2330000 /*Khz*/
+#define INTEL_Z3560_CPU_FREQ 1830000
+#define INTEL_Z3530_CPU_FREQ 1330000
 static int show_cpuinfo(struct seq_file *m, void *v)
 {
 	struct cpuinfo_x86 *c = v;
 	unsigned int cpu;
 	int i;
+	struct cpufreq_frequency_table *table =
+					cpufreq_frequency_get_table(0);
+
+	if (table[0].frequency >= INTEL_Z3580_CPU_FREQ)
+		snprintf(c->x86_model_id, 48, "Intel(R) Atom(TM) CPU Z3580  @ 2.33GHz");
+	else if (table[0].frequency >= INTEL_Z3560_CPU_FREQ)
+		snprintf(c->x86_model_id, 48, "Intel(R) Atom(TM) CPU Z3560  @ 1.83GHz");
+	else
+		snprintf(c->x86_model_id, 48, "Intel(R) Atom(TM) CPU Z3530  @ 1.33GHz");
 
 	cpu = c->cpu_index;
 	seq_printf(m, "processor\t: %u\n"

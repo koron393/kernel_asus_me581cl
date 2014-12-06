@@ -219,8 +219,8 @@ bool ia_css_circbuf_increase_size(
 				unsigned int sz_delta,
 				ia_css_circbuf_elem_t *elems)
 {
-	unsigned int curr_size;
-	unsigned int curr_end;
+	uint8_t curr_size;
+	uint8_t curr_end;
 	unsigned int i = 0;
 
 	if (!cb || sz_delta == 0)
@@ -230,7 +230,11 @@ bool ia_css_circbuf_increase_size(
 	curr_end = cb->desc->end;
 	/* We assume cb was pre defined as global to allow
 	 * increase in size */
-	cb->desc->size += sz_delta;
+	/* FM: are we sure this cannot cause size to become too big? */
+	if (((uint8_t)(cb->desc->size + (uint8_t)sz_delta) > cb->desc->size) && ((uint8_t)sz_delta == sz_delta))
+		cb->desc->size += (uint8_t)sz_delta;
+	else
+		return false; /* overflow in size */
 
 	/* If elems are passed update them else we assume its been taken
 	 * care before calling this function */

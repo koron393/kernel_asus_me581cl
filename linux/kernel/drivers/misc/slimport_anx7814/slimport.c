@@ -22,7 +22,6 @@ static int hdcp_enable = 1;
 /* external_block_en = 1: enable, 0: disable*/
 int external_block_en = 1;
 
-
 /* to access global platform data */
 static struct anx7814_platform_data *g_pdata;
 
