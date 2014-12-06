@@ -59,6 +59,9 @@ enum {
 
 static struct rfkill *bt_rfkill;
 static bool bt_enabled;
+static bool bt_pwm_flag;
+
+extern int pmic_set_modevdd1_force_pwm();
 
 #ifdef LPM_ON
 static bool host_wake_uart_enabled;
@@ -364,6 +367,48 @@ static const struct file_operations bt_read_write_header_fops = {
 	.write = bt_host_wake_write_file
 };
 
+int bt_pwm_write_file(struct file *file, const char *buffer, unsigned long count,void *data){
+
+	char s;
+
+	if( copy_from_user(&s,buffer,1) != 0 ){
+		printk(KERN_ERR "Copy from user Error\n");
+		return -ENOMEM;
+	}
+
+	printk(KERN_ERR "%s %c\n",__func__,s);
+
+	switch(s){
+		case '0':
+			pmic_set_modevdd1_force_pwm(false);
+			bt_pwm_flag=0;
+			printk(KERN_ERR "%s buffer = %c, bt_pwm_flag = %d\n"
+				,__func__,s,bt_pwm_flag);
+			break;
+		case '1':
+			pmic_set_modevdd1_force_pwm(true);
+			bt_pwm_flag=1;
+			printk(KERN_ERR "%s buffer = %c, bt_pwm_flag = %d\n"
+				,__func__,s,bt_pwm_flag);
+			break;
+		default:
+			printk(KERN_ERR "%s error parameter %c\n",__func__,s);
+	}
+
+	return count;
+}
+
+int bt_pwm_read_file(struct file *file, const char *buffer, unsigned long count,void *data){
+
+	printk("%s: bt_pwm_flag = $d\n", __func__,bt_pwm_flag);
+	return 1;
+}
+
+static const struct file_operations bt_pwmmode_header_fops = {
+	.read = bt_pwm_read_file,
+	.write = bt_pwm_write_file
+};
+
 static void bcm_bt_lpm_wake_peer(struct device *dev)
 {
 	bt_lpm.tty_dev = dev;
@@ -392,6 +437,8 @@ static void bcm_bt_lpm_wake_peer(struct device *dev)
 *  This structure hold information about the /proc file
 **/
 static struct proc_dir_entry *Bt_Wake_File;
+
+static struct proc_dir_entry *Bt_PWM_Mode;
 
 static int bcm_bt_lpm_init(struct platform_device *pdev)
 {
@@ -438,7 +485,8 @@ static int bcm_bt_lpm_init(struct platform_device *pdev)
 	printk("Bluetooth_Rf_Test - RX-Mode");
 
 	Bt_Wake_File = proc_create("host_wake", S_IFREG | S_IRUGO, NULL, &bt_read_write_header_fops);
-	if (Bt_Wake_File == NULL) {
+	Bt_PWM_Mode  = proc_create("PwmMode", S_IFREG | S_IRUGO, NULL, &bt_pwmmode_header_fops);
+	if( (Bt_Wake_File == NULL) || (Bt_PWM_Mode == NULL) ){
 		return -ENOMEM;
 	}
 
@@ -660,6 +708,11 @@ int bcm43xx_bluetooth_suspend(struct platform_device *pdev, pm_message_t state)
 	if (!bt_enabled)
 		return 0;
 
+	if(1==bt_pwm_flag){
+		printk(KERN_ERR "%s\n",__func__);
+		pmic_set_modevdd1_force_pwm(false);
+	}
+
 	disable_irq(bt_lpm.int_host_wake);
 	host_wake = gpio_get_value(bt_lpm.gpio_host_wake);
 	if (host_wake) {
@@ -678,6 +731,12 @@ int bcm43xx_bluetooth_resume(struct platform_device *pdev)
 
 	if (bt_enabled)
 		enable_irq(bt_lpm.int_host_wake);
+
+	if(1==bt_pwm_flag){
+		printk(KERN_ERR "%s\n",__func__);
+		pmic_set_modevdd1_force_pwm(true);
+	}
+
 	return 0;
 }
 #endif

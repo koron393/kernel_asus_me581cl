@@ -1748,7 +1748,7 @@ static int psb_driver_load(struct drm_device *dev, unsigned long chipset)
 	 * Start timer here well in advance of vsync starting
 	 * so timer will be ready to go when vsyncs start
 	 */
-	dev_priv->vsync_hrt_period = ktime_set(0, 15000 * NSEC_PER_USEC);
+	dev_priv->vsync_hrt_period = ktime_set(0, 13000 * NSEC_PER_USEC);
 	hrtimer_init(&dev_priv->vsync_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	dev_priv->vsync_timer.function = &vsync_hrt_event_processor;
 

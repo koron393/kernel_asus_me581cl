@@ -55,6 +55,7 @@ static struct rpmsg_instance *pmic_instance;
 #define PBCONFIG_ADDR			0x29
 #define VDD3CNT_ADDR			0xAA
 #define FLTCFG_ADDR				0x18
+#define MODEVDD1_ADDR			0xA8
 
 struct pmic_regs_define {
 	char reg_name[28];
@@ -79,6 +80,7 @@ struct workqueue_struct *shady_strees_work_queue = NULL;
 
 static struct shady_cove_stress *pshady_cove_stress;
 static int pmic_status = 0;
+static u8 modevdd1_mode = 0;
 
 #define SHADY_IOC_MAGIC		0xFB
 #define SHADY_IOC_MAXNR	5
@@ -91,6 +93,59 @@ static int pmic_status = 0;
 #define PMIC_VENDOR_ID_MASK	(0x03 << 6)
 #define PMIC_ID_ADDR			0x00
 #define SHADYCOVE_VENDORID	0x00
+
+int pmic_set_modevdd1_force_pwm(bool val)
+{
+	int ret = 0;
+
+	if(val)
+	{
+		ret = intel_scu_ipc_ioread8(MODEVDD1_ADDR, &modevdd1_mode);
+
+		if(ret)
+		{
+			printk("%s : intel_scu_ipc_ioread8 fail\n");
+			goto error;
+		}
+		printk("%s : switch modevdd1 to Force-PWM mode, modevdd1_mode = 0x%x ++\n", __func__, modevdd1_mode);
+		modevdd1_mode |= 0x02;
+		modevdd1_mode &= 0xFB;
+		ret = intel_scu_ipc_iowrite8(MODEVDD1_ADDR, modevdd1_mode);
+
+		if(ret)
+		{
+			printk("%s : intel_scu_ipc_iowrite8 fail\n");
+			goto error;
+		}
+		printk("%s : switch modevdd1 to Force-PWM mode, modevdd1_mode = 0x%x --\n", __func__, modevdd1_mode);
+	}
+	else
+	{
+		ret = intel_scu_ipc_ioread8(MODEVDD1_ADDR, &modevdd1_mode);
+
+		if(ret)
+		{
+			printk("%s : intel_scu_ipc_ioread8 fail\n");
+			goto error;
+		}
+		printk("%s : switch modevdd1 to Reserved mode, modevdd1_mode = 0x%x ++\n", __func__, modevdd1_mode);
+		modevdd1_mode |= 0x06;
+		ret = intel_scu_ipc_iowrite8(MODEVDD1_ADDR, modevdd1_mode);
+
+		if(ret)
+		{
+			printk("%s : intel_scu_ipc_iowrite8 fail\n");
+			goto error;
+		}
+		printk("%s : switch modevdd1 to Reserved mode, modevdd1_mode = 0x%x --\n", __func__, modevdd1_mode);
+	}
+	return 0;
+
+error:
+	return 1;
+
+}
+EXPORT_SYMBOL(pmic_set_modevdd1_force_pwm);
 
 static ssize_t pmic_show_status(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
@@ -646,6 +701,8 @@ static int pmic_rpmsg_probe(struct rpmsg_channel *rpdev)
        rc = misc_register(&pshady_cove_stress->shady_miscdev);
 	printk(KERN_INFO "pmic_rpmsg_probe: shady cove register misc device for I2C stress test rc=%x\n", rc);
 	//=================stree test end============================================
+
+	pmic_set_modevdd1_force_pwm(false);
 
 	goto out;
 
