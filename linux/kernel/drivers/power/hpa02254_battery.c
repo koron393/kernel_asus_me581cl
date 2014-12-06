@@ -1613,7 +1613,6 @@ static int bq27541_probe(struct i2c_client *client, const struct i2c_device_id *
 	INIT_DELAYED_WORK(&bq27541_device->low_low_bat_work, low_low_battery_check);
 	cancel_delayed_work(&bq27541_device->status_poll_work);
 
-	mutex_init(&lock);
 	spin_lock_init(&bq27541_device->lock);
 	wake_lock_init(&bq27541_device->low_battery_wake_lock, WAKE_LOCK_SUSPEND, "low_battery_detection");
 	wake_lock_init(&bq27541_device->cable_wake_lock, WAKE_LOCK_SUSPEND, "cable_state_changed");
