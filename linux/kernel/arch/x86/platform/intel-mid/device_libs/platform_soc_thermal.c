@@ -22,6 +22,8 @@
 #include <asm/intel-mid.h>
 #include <asm/intel_mid_thermal.h>
 
+#include <linux/board_asustek.h>
+
 #define BYT_SOC_THRM_IRQ	86
 #define BYT_SOC_THRM		"soc_thrm"
 
@@ -37,6 +39,25 @@ static struct soc_throttle_data ann_mofd_soc_data[] = {
 	},
 	{
 		.power_limit = 0x41, /* 2.1W */
+		.floor_freq = 0x01,
+	},
+	{
+		.power_limit = 0x1C, /* 0.9W */
+		.floor_freq = 0x01,
+	},
+	{
+		.power_limit = 0x1C, /* 0.9W */
+		.floor_freq = 0x01,
+	},
+};
+
+static struct soc_throttle_data ann_mofd_me581cl_data[] = {
+	{
+		.power_limit = 0x6D, /* 3.5W */
+		.floor_freq = 0x00,
+	},
+	{
+		.power_limit = 0x2E, /* 1.5W */
 		.floor_freq = 0x01,
 	},
 	{
@@ -109,8 +130,13 @@ void soc_thrm_device_handler(struct sfi_device_table_entry *pentry,
 			INTEL_MID_BOARD(1, TABLET, MRFL))
 		pdev->dev.platform_data = &tng_soc_data;
 	else if (INTEL_MID_BOARD(1, PHONE, MOFD) ||
-			INTEL_MID_BOARD(1, TABLET, MOFD))
-		pdev->dev.platform_data = &ann_mofd_soc_data;
+			INTEL_MID_BOARD(1, TABLET, MOFD)) {
+
+			if (asustek_get_project_id() == 0)
+				pdev->dev.platform_data = &ann_mofd_me581cl_data;
+			else
+				pdev->dev.platform_data = &ann_mofd_soc_data;
+	}
 }
 
 static inline int byt_program_ioapic(int irq, int trigger, int polarity)

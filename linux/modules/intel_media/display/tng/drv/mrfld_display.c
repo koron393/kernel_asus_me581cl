@@ -293,7 +293,7 @@ static void mrfld_crtc_dpms(struct drm_crtc *crtc, int mode)
 		(mode == DRM_MODE_DPMS_SUSPEND || mode == DRM_MODE_DPMS_OFF)) ||
 		(hdmi_priv->hdmi_suspended == false &&
 		(mode == DRM_MODE_DPMS_STANDBY || mode == DRM_MODE_DPMS_ON)))) {
-			pr_info("%s: skip.\n");
+			pr_info("%s: skip.\n", __func__);
 			return;
 	}
 

@@ -975,6 +975,11 @@ bool drm_edid_block_valid(u8 *raw_edid, int block, bool print_bad_edid)
 	if (WARN_ON(!raw_edid))
 		return false;
 
+	pr_info("*********** Print EDID block %d start **********\n", block);
+	print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE, 16, 1,
+				       raw_edid, EDID_LENGTH, false);
+	pr_info("*********** Print EDID block %d end ************\n", block);
+
 	if (edid_fixup > 8 || edid_fixup < 0)
 		edid_fixup = 6;
 
