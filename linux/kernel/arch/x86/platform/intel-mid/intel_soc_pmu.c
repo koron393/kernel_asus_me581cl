@@ -2148,9 +2148,9 @@ static int mid_suspend_begin(suspend_state_t state)
 	mid_pmu_cxt->suspend_started = true;
 	pmu_s3_stats_update(1);
 
-	/* Restrict to C6 during suspend */
+	/* Restrict to C4 during suspend */
 	pm_qos_update_request(mid_pmu_cxt->s3_restrict_qos,
-					(CSTATE_EXIT_LATENCY_S0i1-1));
+					(CSTATE_EXIT_LATENCY_C6-1));
 	return 0;
 }
 

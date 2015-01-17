@@ -692,6 +692,8 @@ static void dpst_restore_bl_adj_factor(struct drm_device *dev)
 	struct drm_psb_private *dev_priv = dev->dev_private;
 	int i = 0;
 
+	pr_info("%s+\n", __func__);
+
 	if (!dev_priv)
 		return;
 
@@ -703,11 +705,12 @@ static void dpst_restore_bl_adj_factor(struct drm_device *dev)
 		for(i = dev_priv->blc_adj2; i <= blc_adj2; i = i+30)
 		{
 			psb_dpst_bl(dev, &i);
-			msleep(100);
+			msleep(10);
 		}
 		i = blc_adj2;
 		psb_dpst_bl(dev, &i);
 	}
+	pr_info("%s-\n", __func__);
 }
 
 static void dpst_save_gamma_settings(struct drm_device *dev)
@@ -782,9 +785,7 @@ static void dpst_restore_gamma_settings(struct drm_device *dev)
 
 void dpst_disable_post_process(struct drm_device *dev)
 {
-	if (!hist_enable) {
-		dpst_restore_bl_adj_factor(dev);
-	}
+	dpst_restore_bl_adj_factor(dev);
 	//dpst_restore_gamma_settings(dev);
 }
 

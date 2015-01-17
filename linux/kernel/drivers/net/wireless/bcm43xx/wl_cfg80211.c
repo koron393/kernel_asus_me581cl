@@ -7276,7 +7276,15 @@ wl_notify_connect_status_ap(struct wl_priv *wl, struct net_device *ndev,
 	struct station_info sinfo;
 #endif 
 
-	WL_DBG(("event %d status %d reason %d\n", event, ntoh32(e->status), reason));
+	WL_ERR(("event %d status %d reason %d\n", event, ntoh32(e->status), reason));
+
+	if (event == WLC_E_ASSOC_IND) {
+		// Hold a 5sec wakelock for hotspot connection.
+		WL_DBG(("Hold a 5sec wakelock for hotspot connection\n"));
+		DHD_OS_WAKE_LOCK_CTRL_TIMEOUT_ENABLE((dhd_pub_t *)(wl->pub), 5000);
+		DHD_OS_WAKE_LOCK_TIMEOUT((dhd_pub_t *)(wl->pub));
+	}
+
 	/* if link down, bsscfg is disabled. */
 	if (event == WLC_E_LINK && reason == WLC_E_LINK_BSSCFG_DIS &&
 		wl_get_p2p_status(wl, IF_DELETING) && (ndev != wl_to_prmry_ndev(wl))) {

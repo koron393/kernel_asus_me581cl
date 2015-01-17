@@ -27,7 +27,6 @@
 #include "psb_intel_drv.h"
 #include "pwr_mgmt.h"
 #include "mdfld_dsi_dbi.h"
-#include "psb_dpst_func.h"
 
 #define MRST_BLC_MAX_PWM_REG_FREQ	    0xFFFF
 #define BLC_PWM_PRECISION_FACTOR 100	/* 10000000 */
@@ -54,9 +53,6 @@ u8 blc_pol;
 u8 blc_type;
 
 int lastFailedBrightness = -1;
-int dynamic_dpst_on_off = 1;
-extern dpst_init_flag;
-extern int hist_enable;
 int psb_set_brightness(struct backlight_device *bd)
 {
 	struct drm_device *dev =
@@ -102,23 +98,6 @@ int psb_set_brightness(struct backlight_device *bd)
 				 adjusted_level);
 		}
 #endif
-
-		if (hist_enable ==0) {		//user already disable DPST from /proc/dpst_hist_ctl
-			PSB_DEBUG_ENTRY("User disable DPST\n");
-		} else if (level < 60 && dpst_init_flag && dynamic_dpst_on_off == 1) {
-			printk("DPST disable \n");	//disable DPST if brightness value less than 60
-			dynamic_dpst_on_off = 0;
-			psb_hist_enable(dev, &dynamic_dpst_on_off);
-		} else if (level >= 80 && dpst_init_flag && dynamic_dpst_on_off == 0) {
-			printk("DPST enable \n");	//enable DPST if brightness value is more or equal to 80
-			dynamic_dpst_on_off = 1;
-			psb_hist_enable(dev, &dynamic_dpst_on_off);
-		}
-
-		//set the brightness back to original value if DPST is disabled
-		if (dynamic_dpst_on_off ==0) {
-			adjusted_level = level;
-		}
 
 		PSB_DEBUG_BL("Adjusted Backlight value: %d\n", adjusted_level);
 		mdfld_dsi_brightness_control(dev, 0, adjusted_level);

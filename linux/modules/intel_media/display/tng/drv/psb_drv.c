@@ -1120,12 +1120,16 @@ bool mrst_get_vbt_data(struct drm_psb_private *dev_priv)
 	project = asustek_get_project_id();
 	pr_info("%s: select panel of project=%d \n", __func__, project);
 
-	if (project == 0 || project == 7)
+	if (project == 0 || project == 7 || project == 6)
 		dev_priv->panel_id = AUO_VID;
 	else if (project == 1)
 		dev_priv->panel_id = INNOLUX_N070ICEG02_VID;
 	else if (project == 2 || project == 3)
 		dev_priv->panel_id = JDI_LPM070W425A_CMD;
+	else {
+		pr_err("No matched project id, assign to AUO by default.\n");
+		dev_priv->panel_id = AUO_VID;
+	}
 
 	dev_priv->mipi_encoder_type = is_panel_vid_or_cmd(dev_priv->dev);
 

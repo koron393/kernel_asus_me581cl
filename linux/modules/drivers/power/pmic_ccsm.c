@@ -98,6 +98,7 @@ extern bool slimport_is_connected(void);
 	 ((bprof->temp_mon_ranges < MIN_BATT_PROF))
 
 #define USB_WAKE_LOCK_TIMEOUT	(5 * HZ)
+#define UNPLUG_AC_WAKE_LOCK_TIMEOUT	(2 * HZ)
 
 /* 100mA value definition for setting the inlimit in bq24261 */
 #define USBINPUTICC100VAL	100
@@ -1414,6 +1415,7 @@ static void handle_level1_interrupt(u8 int_reg, u8 stat_reg)
 static irqreturn_t pmic_gpio_acok_isr(int irq, void *dev_id)
 {
 	printk(KERN_INFO "%s, pmic_gpio_ACOK = %d\n", __func__, gpio_get_value(PMIC_APQ_AP_ACOK)? 1 : 0);
+	wake_lock_timeout(&chc.wakelock, UNPLUG_AC_WAKE_LOCK_TIMEOUT);
 
 	if ((gpio_get_value(PMIC_APQ_AP_ACOK)? 1 : 0))
 		queue_delayed_work(pmic_gpio_acok_wq, &chc.acok_irq_work, 0.5*HZ);
