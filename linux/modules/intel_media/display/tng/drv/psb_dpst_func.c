@@ -68,6 +68,8 @@ static u32 lut_adj[256];
 static struct drm_device *g_dev = NULL;	// hack for the queue
 static uint32_t diet_saved[33];
 
+extern int first_time_dpst;
+
 /* hist value in home UI on different resolution */
 static uint32_t *dpst_hist_fake;
 static uint32_t dpst_hist_25x16[] = {0x4d60, 0x319a3, 0xe6055, 0x13b47f,
@@ -210,7 +212,9 @@ int psb_hist_enable(struct drm_device *dev, void *data)
 /* Use a fake hist status to avoid enhancement is adapted to black
 * content during suspend, while make content too bright on resume.
 */
-if(dev_priv->early_suspended) {
+if (first_time_dpst) {
+	first_time_dpst = 0;
+	pr_info("%s: fake dpst histogram\n", __func__);
 	memcpy(arg, dpst_hist_fake, 32*sizeof(uint32_t));
 	return 0;
 }

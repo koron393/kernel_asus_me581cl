@@ -38,6 +38,7 @@
 #include "dc_maxfifo.h"
 
 static struct drm_device *g_dev;
+int first_time_dpst = 0;
 
 static void gfx_early_suspend(struct early_suspend *h)
 {
@@ -93,6 +94,7 @@ static void gfx_early_suspend(struct early_suspend *h)
 	dev_priv->early_suspended = true;
 
 	mutex_unlock(&dev->mode_config.mutex);
+	first_time_dpst = 1;
         psb_dpst_notify_change_um(DPST_EVENT_HIST_INTERRUPT,dev_priv->psb_dpst_state);
 }
 
@@ -135,6 +137,8 @@ static void gfx_late_resume(struct early_suspend *h)
 	}
 
 	mutex_unlock(&dev->mode_config.mutex);
+	first_time_dpst = 1;
+	psb_dpst_notify_change_um(DPST_EVENT_HIST_INTERRUPT, dev_priv->psb_dpst_state);
 }
 
 static struct early_suspend intel_media_early_suspend = {

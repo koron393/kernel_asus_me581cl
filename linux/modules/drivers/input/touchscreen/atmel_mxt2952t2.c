@@ -318,6 +318,7 @@ struct mxt_data {
         u8 t100_init_intthr;
         u8 t47_byte0;
         u8 t71_byte92;
+        bool enable_pen;
 };
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
@@ -2125,6 +2126,8 @@ static int mxt_read_info_block(struct mxt_data *data)
 	if (error)
 		goto err_free_mem;
 
+	data->enable_pen = (data->t47_byte0) & 1;
+
 	error = __mxt_read_reg(client, data->T71_address + MXT_T71_VNSINTTHR, sizeof(data->t71_byte92), &data->t71_byte92);
 	if (error)
 		goto err_free_mem;
@@ -3062,60 +3065,66 @@ static ssize_t mxt_enable_pen_store(struct device *dev,
 	if (data->suspended || data->in_bootloader)
 		return -EINVAL;
 
-        sscanf(buf, "%u", &i);
-        switch (i){
-		case 0:
-	                ret = mxt_write_reg(data->client, data->T100_address + MXT_T100_INTTHR, data->t71_byte92);
+	sscanf(buf, "%u", &i);
+	switch (i){
+	case 0:
+		if (data->enable_pen) {
+			ret = mxt_write_reg(data->client, data->T100_address + MXT_T100_INTTHR, data->t71_byte92);
 			if (ret != 0) {
-			        dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
-                                return -EIO;
-		        }
-	                ret = mxt_write_reg(data->client, data->T47_address + MXT_T47_CTRL, 0);
+				dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
+				return -EIO;
+			}
+			ret = mxt_write_reg(data->client, data->T47_address + MXT_T47_CTRL, 0);
 			if (ret != 0) {
-			        dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
-                                return -EIO;
-		        }
-	                ret = mxt_write_reg(data->client, data->T71_address + MXT_T71_SSINTTHR, data->t71_byte92);
+				dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
+				return -EIO;
+			}
+			ret = mxt_write_reg(data->client, data->T71_address + MXT_T71_SSINTTHR, data->t71_byte92);
 			if (ret != 0) {
-			        dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
-                                return -EIO;
-		        }
-	                ret = mxt_write_reg(data->client, data->T71_address + MXT_T71_NSINTTHR, data->t71_byte92);
+				dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
+				return -EIO;
+			}
+			ret = mxt_write_reg(data->client, data->T71_address + MXT_T71_NSINTTHR, data->t71_byte92);
 			if (ret != 0) {
-			        dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
-                                return -EIO;
-		        }
-                        break;
-                case 1:
-		        ret = mxt_t6_command(data, MXT_COMMAND_CALIBRATE, 1, true);
-                        if(ret != 0){
-			        dev_err(dev, "%d:Calibration error, ret=%d\n", __LINE__,ret);
-                                return -EIO;
-                        }
-	                ret = mxt_write_reg(data->client, data->T71_address + MXT_T71_NSINTTHR, data->t100_init_intthr);
+				dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
+				return -EIO;
+			}
+			data->enable_pen = false;
+		}
+		break;
+	case 1:
+		if (!(data->enable_pen)) {
+			ret = mxt_t6_command(data, MXT_COMMAND_CALIBRATE, 1, true);
+			if(ret != 0){
+				dev_err(dev, "%d:Calibration error, ret=%d\n", __LINE__,ret);
+				return -EIO;
+			}
+			ret = mxt_write_reg(data->client, data->T71_address + MXT_T71_NSINTTHR, data->t100_init_intthr);
 			if (ret != 0) {
-			        dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
-                                return -EIO;
-		        }
-	                ret = mxt_write_reg(data->client, data->T71_address + MXT_T71_SSINTTHR, data->t100_init_intthr);
+				dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
+				return -EIO;
+			}
+			ret = mxt_write_reg(data->client, data->T71_address + MXT_T71_SSINTTHR, data->t100_init_intthr);
 			if (ret != 0) {
-			        dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
-                                return -EIO;
-		        }
-	                ret = mxt_write_reg(data->client, data->T100_address + MXT_T100_INTTHR, data->t100_init_intthr);
+				dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
+				return -EIO;
+			}
+			ret = mxt_write_reg(data->client, data->T100_address + MXT_T100_INTTHR, data->t100_init_intthr);
 			if (ret != 0) {
-			        dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
-                                return -EIO;
-		        }
-	                ret = mxt_write_reg(data->client, data->T47_address + MXT_T47_CTRL, data->t47_byte0);
+				dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
+				return -EIO;
+			}
+			ret = mxt_write_reg(data->client, data->T47_address + MXT_T47_CTRL, data->t47_byte0);
 			if (ret != 0) {
-			        dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
-                                return -EIO;
-		        }
-                        break;
-                default:
-                        break;
-        }
+				dev_err(dev, "%d:Config write error, ret=%d\n", __LINE__,ret);
+				return -EIO;
+			}
+			data->enable_pen = true;
+		}
+		break;
+	default:
+		break;
+	}
 	return count;
 }
 
